@@ -5,7 +5,7 @@ from typing import Dict, List
 from urllib.parse import urlparse
 
 def scrape_websites_from_csv(csv_file_path: str) -> List[Dict[str, str]]:
-
+# Function to scrape CSV and domains in it -> to return parsed HTML content.
     scraped_data = []
 
     with open(csv_file_path, 'r') as csvfile:
@@ -47,7 +47,7 @@ def scrape_websites_from_csv(csv_file_path: str) -> List[Dict[str, str]]:
     return scraped_data
 
 def analyze_content(data: Dict[str, str]) -> List[str]:
-    """Analyze scraped content to identify key themes and topics."""
+    #Analyze scraped content to identify key themes and topics.
     relevant_content = []
     
     keywords = ['achievement','professional','proud','remote work', 'solution']
@@ -61,6 +61,7 @@ def analyze_content(data: Dict[str, str]) -> List[str]:
     return relevant_content
 
 def generate_personalized_email(data: Dict[str, str], relevant_content: List[str]) -> str:
+#Generic Personalized message using the relevant HTML content (to be replaced by OpenAI prompt)
   return f"Subject: Innovative Workspace Solutions for {data['domain']}\n\n" \
            f"Dear {data['domain']} Team,\n\n" \
            f"I hope this email finds you well. I recently came across your website and was impressed by {data['title']}.\n\n" \
@@ -74,6 +75,7 @@ def generate_personalized_email(data: Dict[str, str], relevant_content: List[str
 def main():
     csv_file_path = input("Enter the path to your CSV file containing website URLs: ")
     scraped_websites = scrape_websites_from_csv(csv_file_path)
+	#Scrape domains in CSV file
 
     # Process each scraped website
     for website_data in scraped_websites:
@@ -91,3 +93,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+
