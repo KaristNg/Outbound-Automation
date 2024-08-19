@@ -1,0 +1,93 @@
+import csv 
+import requests
+from bs4 import BeautifulSoup
+from typing import Dict, List
+from urllib.parse import urlparse
+
+def scrape_websites_from_csv(csv_file_path: str) -> List[Dict[str, str]]:
+
+    scraped_data = []
+
+    with open(csv_file_path, 'r') as csvfile:
+        csv_reader = csv.reader(csvfile)
+        next(csv_reader, None)  # Skip the header row if it exists
+
+        for row in csv_reader:
+            if not row:  # Skip empty rows
+                continue
+            
+            url = row[0].strip()  # Assuming the URL is in the first column
+            if not url.startswith('http'):
+                url = 'http://' + url
+
+            try:
+                response = requests.get(url, timeout=10)
+                soup = BeautifulSoup(response.content, 'html.parser')
+                
+                data = {
+                    'url': url,
+                    'domain': urlparse(url).netloc,
+                    'title': soup.title.string if soup.title else 'No title found',
+                    'meta_description': soup.find('meta', attrs={'name': 'description'})['content'] if soup.find('meta', attrs={'name': 'description'}) else 'No meta description found',
+                    'headings': [h.text for h in soup.find_all(['h1', 'h2', 'h3'])[:5]],
+                    'paragraphs': [p.text for p in soup.find_all('p')[:3]]
+                }
+                
+                scraped_data.append(data)
+                print(f"Successfully scraped: {url}")
+            
+            except Exception as e:
+                print(f"Error scraping {url}: {str(e)}")
+                scraped_data.append({
+                    'url': url,
+                    'domain': urlparse(url).netloc,
+                    'error': str(e)
+                })
+
+    return scraped_data
+
+def analyze_content(data: Dict[str, str]) -> List[str]:
+    """Analyze scraped content to identify key themes and topics."""
+    relevant_content = []
+    
+    keywords = ['achievement','professional','proud','remote work', 'solution']
+    
+    all_text = ' '.join(data['headings'] + data['paragraphs']).lower()
+    
+    for keyword in keywords:
+        if keyword in all_text:
+            relevant_content.append(f"Website mentions {keyword}")
+    
+    return relevant_content
+
+def generate_personalized_email(data: Dict[str, str], relevant_content: List[str]) -> str:
+  return f"Subject: Innovative Workspace Solutions for {data['domain']}\n\n" \
+           f"Dear {data['domain']} Team,\n\n" \
+           f"I hope this email finds you well. I recently came across your website and was impressed by {data['title']}.\n\n" \
+           f"At Litespace, we specialize in providing innovative workspace solutions that enhance productivity and collaboration, " \
+           f"especially in remote work environments. Given your focus on {', '.join(relevant_content)}, I believe our services " \
+           f"could be particularly beneficial for your team.\n\n" \
+           f"Would you be interested in scheduling a brief call to discuss how Litespace can support your specific needs?\n\n" \
+           f"Best regards,\n" \
+           f"The Litespace Team"
+
+def main():
+    csv_file_path = input("Enter the path to your CSV file containing website URLs: ")
+    scraped_websites = scrape_websites_from_csv(csv_file_path)
+
+    # Process each scraped website
+    for website_data in scraped_websites:
+        if 'error' in website_data:
+            print(f"Skipping {website_data['url']} due to error: {website_data['error']}")
+            continue
+
+        relevant_content = analyze_content(website_data)
+        personalized_email = generate_personalized_email(website_data, relevant_content)
+
+        print(f"\nGenerated Personalized Email for {website_data['domain']}:")
+        print("-----------------------------")
+        print(personalized_email)
+        print("\n")
+
+if __name__ == "__main__":
+    main()
